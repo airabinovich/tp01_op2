@@ -1,0 +1,21 @@
+                                Sistemas Operativos II
+
+Trabajo Práctico 1 – IPC Sockets
+
+Elabore un conjunto de programas para un Network Time Protocol (NTP) en lenguaje "C", que cumpla con las siguientes especificaciones:
+    • Debe existir un programa cliente y un programa servidor NTP.
+    • El programa servidor utilizará la capa de transporte TCP, puerto 6020.
+    • El timestamp debe contener el día de la semana, día del mes, mes, año, hora, minutos y segundos.
+    • El programa cliente utilizará un puerto TCP, asignado de manera aleatoria por el sistema operativo, al momento de la conexión.
+    • Al inicio se deberá asignar todos ceros a su registro de timestamp.
+    • Una vez establecida la sesión entre el programa cliente y el servidor, la aplicación proveerá de un "prompt" que identifica la misma. En el contexto de este "prompt" se podrán intercambiar mensajes entre cliente y servidor e ir mostrándose en pantalla. Existen comandos especiales que deben poder ejecutarse tanto desde el cliente como del servidor:
+        o updatetime: mensaje que se le envía al servidor solicitando su timestamp. Este al recibirlo, se fija en el time de su sistema, actualiza su registro y luego lo envía al cliente. El cliente al recibirlo actualiza su registro con el nuevo timestamp y lo muestra en pantalla.
+        o settime: se envía desde el cliente, un archivo de texto plano al servidor, con el registro de timestamp. El receptor indicará cuando el archivo se reciba tanto local como remotamente.
+        o timestamp: muestra el registro de timestamp local.
+    • Para la transferencia del contenido de archivo, se deberá utilizar la capa de transporte UDP, puerto 6020.
+    • Durante la operación de transferencia del archivo debe bloquearse el prompt del cliente hasta tanto finalice la transferencia.
+    • Tanto la especificación del protocolo de red en la capa de aplicación, así como la elección de la interfaz de usuario del programa cliente, quedan liberadas a criterio del estudiante.
+    • Debe incluirse un mecanismo de control y manejo de errores en ambos extremos para el manejo de archivos, esto es, si un comando no es reconocido o el argumento de un comando es no válido (ej. send <directorio-invalido>), debe comunicar esta situación ante la imposibilidad de ejecutarlo.
+    • Cada operación ejecutada en el servidor deberá ser registrada en un archivo local al cliente llamado “ntp.log” a modo de respaldo. En este se deberá guardar cada operación indicando fecha y hora de cada operación, comando ejecutado y el resultado de dicha ejecución (Éxito o Tipo de Error).
+    • Se deberá proveer los archivos fuente del cliente y del servidor, así como cualquier otro archivo asociado a la compilación, si existiera (archivos de proyecto "Makefile", por ejemplo). Se debe asumir que las pruebas de compilación se realizarán en un equipo que cuenta con las herramientas típicas de consola para el desarrollo de programas (Ej: gcc, make), y NO se cuenta con herramientas "GUI" para la compilación de los mismos (Ej: eclipse).
+    • Se deberá proveer un instructivo que describa brevemente una secuencia típica de comandos de la aplicación, que acrediten el cumplimiento de las especificaciones del programa.
