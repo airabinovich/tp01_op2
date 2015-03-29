@@ -1,21 +1,28 @@
+/**
+ * @author Ariel Iván Rabinovich
+ * @date Mar 2015
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h> 
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <time.h>
 #define TAM 256
+#define puerto 6020
 
 int main( int argc, char *argv[] ) {
-	int sockfd, newsockfd, puerto, clilen, pid;
-	char buffer[TAM];
+	int sockfd, newsockfd, clilen, pid;
+	char buffer[TAM], stimestamp[TAM];
 	struct sockaddr_in serv_addr, cli_addr;
 	int n;
+	time_t timestamp = time(&timestamp);
 
-	if ( argc < 2 ) {
-		fprintf( stderr, "Uso: %s <puerto>\n", argv[0] );
-		exit( 1 );
-	}
+	//~ if ( argc < 2 ) {
+		//~ fprintf( stderr, "Uso: %s <puerto>\n", argv[0] );
+		//~ exit( 1 );
+	//~ }
 
 	sockfd = socket( AF_INET, SOCK_STREAM, 0);
 	if ( sockfd < 0 ) { 
@@ -24,7 +31,7 @@ int main( int argc, char *argv[] ) {
 	}
 
 	memset( (char *) &serv_addr, 0, sizeof(serv_addr) );
-	puerto = atoi( argv[1] );
+	//~ puerto = atoi( argv[1] );
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_addr.s_addr = INADDR_ANY;
 	serv_addr.sin_port = htons( puerto );	//htons transforma little endian en big endian si es necesario
@@ -56,6 +63,7 @@ int main( int argc, char *argv[] ) {
 			close( sockfd );
 
 			while ( 1 ) {
+				printf("\nBucle Principal\n");
 				memset( buffer, 0, TAM );
 				n = read( newsockfd, buffer, TAM-1 );
 				if ( n < 0 ) {
@@ -64,20 +72,30 @@ int main( int argc, char *argv[] ) {
 				}
 				printf( "PROCESO %d. ", getpid() );
 				printf( "Recibí: %s", buffer );
-				n = write( newsockfd, "Obtuve su mensaje", 18 );
-				if ( n < 0 ) {
-					perror( "escritura en socket" );
-					exit( 1 );
-				}
-				// Verificación de si hay que terminar
-				buffer[strlen(buffer)-1] = '\0';
-				if( !strcmp( "fin", buffer ) ) {
-					printf( "PROCESO %d. Como recibí 'fin', termino la ejecución.\n\n", getpid() );
-					exit(0);
+				if (!strcmp("updatetime",buffer)){
+					timestamp = time(&timestamp);
+					sprintf( stimestamp, "%d" , (int)timestamp);
+					n =  write(newsockfd, stimestamp , strlen(stimestamp));
+					if(n <0){
+						perror("escritura en socket");
+						exit(1);
+					}
+				}else{ 
+					//~ buffer[strlen(buffer)-1] = '\0';
+					n = write( newsockfd, "Obtuve su mensaje", 18 );
+					if ( n < 0 ) {
+						perror( "escritura en socket" );
+						exit( 1 );
+					}
+					// Verificación de si hay que terminar
+					if( !strcmp( "fin", buffer ) ) {
+						printf( "PROCESO %d. Como recibí 'fin', termino la ejecución.\n\n", getpid() );
+						exit(0);
+					}
 				}
 			}
 		}
-		else {
+		else {	//proceso actual (servidor)
 			printf( "SERVIDOR: Nuevo cliente, que atiende el proceso hijo: %d\n", pid );
 			close( newsockfd );
 		}
