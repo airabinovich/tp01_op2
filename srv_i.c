@@ -10,7 +10,8 @@
 #include <netinet/in.h>
 #include <time.h>
 #define TAM 256
-#define puerto 6020
+#define puertoTCP 6020
+#define puertoUDP 6021
 
 int main( int argc, char *argv[] ) {
 	int sockfd, newsockfd, clilen, pid;
@@ -19,11 +20,6 @@ int main( int argc, char *argv[] ) {
 	int n;
 	time_t timestamp = time(&timestamp);
 
-	//~ if ( argc < 2 ) {
-		//~ fprintf( stderr, "Uso: %s <puerto>\n", argv[0] );
-		//~ exit( 1 );
-	//~ }
-
 	sockfd = socket( AF_INET, SOCK_STREAM, 0);
 	if ( sockfd < 0 ) { 
 		perror( " apertura de socket ");
@@ -31,10 +27,9 @@ int main( int argc, char *argv[] ) {
 	}
 
 	memset( (char *) &serv_addr, 0, sizeof(serv_addr) );
-	//~ puerto = atoi( argv[1] );
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_addr.s_addr = INADDR_ANY;
-	serv_addr.sin_port = htons( puerto );	//htons transforma little endian en big endian si es necesario
+	serv_addr.sin_port = htons( puertoTCP );	//htons transforma little endian en big endian si es necesario
 
 	if ( bind(sockfd, ( struct sockaddr *) &serv_addr, sizeof( serv_addr ) ) < 0 ) {
 		perror( "ligadura" );

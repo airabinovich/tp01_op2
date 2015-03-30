@@ -7,21 +7,23 @@
 #include <netdb.h> 
 #include <time.h>
 #define TAM 256
+#define puertoTCP 6020
+#define puertoUDP 6021
 
 int main( int argc, char *argv[] ) {
-	int sockfd, puerto, n;
+	int sockfd, n;
 	struct sockaddr_in serv_addr;
 	struct hostent *server;
 	int terminar = 0, actualizar = 0;
 	time_t timestamp = 0;
-
+	FILE *log = fopen("cliente.log","w");
 	char buffer[TAM];
-	if ( argc < 3 ) {
-		fprintf( stderr, "Uso %s host puerto\n", argv[0]);
+	
+	if ( argc < 2 ) {
+		fprintf( stderr, "Uso %s host address\n", argv[0]);
 		exit( 0 );
 	}
 
-	puerto = atoi( argv[2] );
 	sockfd = socket( AF_INET, SOCK_STREAM, 0 );	//sockfd es un file descriptor
 	if ( sockfd < 0 ) {
 		perror( "ERROR apertura de socket" );
@@ -36,7 +38,7 @@ int main( int argc, char *argv[] ) {
 	memset( (char *) &serv_addr, 0, sizeof(serv_addr) ); //cambie '0' por 0
 	serv_addr.sin_family = AF_INET;
 	bcopy( (char *)server->h_addr, (char *)&serv_addr.sin_addr.s_addr, server->h_length );
-	serv_addr.sin_port = htons( puerto );
+	serv_addr.sin_port = htons( puertoTCP );
 	if ( connect( sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr ) ) < 0 ) {
 		perror( "conexion" );
 		exit( 1 );
@@ -47,6 +49,14 @@ int main( int argc, char *argv[] ) {
 		memset( buffer, '\0', TAM );
 		fgets( buffer, TAM-1, stdin );
 		buffer[strlen(buffer)-1] = '\0';
+		
+		//<log>
+		time_t tiempolocal = time(&tiempolocal);
+		char *stiempolocal = asctime(localtime(&tiempolocal));
+		stiempolocal[strlen(stiempolocal)-1]='\0';
+		fprintf(log,"%s: %s\n",stiempolocal,buffer);
+		//<\log>
+		
 		if(!strcmp("timestamp",buffer)){
 			printf("%s",asctime(localtime(&timestamp)));
 		}else{
@@ -72,7 +82,7 @@ int main( int argc, char *argv[] ) {
 			}
 			if(actualizar){
 				timestamp = atoi(buffer);
-				printf("Timestamp actualizado\n");
+				printf("Timestamp actualizado\nNuevo timestamp: %s",asctime(localtime(&timestamp)));
 				actualizar = 0;
 			}else{
 				printf( "Respuesta: %s\n", buffer );
@@ -83,5 +93,6 @@ int main( int argc, char *argv[] ) {
 			}
 		}
 	}
+	fclose(log);
 	return 0;
 } 
