@@ -14,12 +14,13 @@
 #define puertoUDP 6021
 
 int main( int argc, char *argv[] ) {
-	int sockfd, newsockfd, clilen, pid;
-	char buffer[TAM], stimestamp[TAM];
+	int sockfd, newsockfd, clilen, pid, sockUDPfd;
+	char buffer[TAM], stimestamp[TAM], bufferUDP[TAM];
 	struct sockaddr_in serv_addr, cli_addr;
-	int n;
+	int n,u;
 	time_t timestamp = time(&timestamp);
 
+	//<socket TCP>
 	sockfd = socket( AF_INET, SOCK_STREAM, 0);
 	if ( sockfd < 0 ) { 
 		perror( " apertura de socket ");
@@ -40,7 +41,27 @@ int main( int argc, char *argv[] ) {
 
 	listen( sockfd, 5 );
 	clilen = sizeof( cli_addr );
+	//<\socket TCP>
+	//<socket UDP>
+	sockUDPfd = socket( AF_INET, SOCK_DGRAM, 0 );
+	if (sockfd < 0) { 
+		perror("ERROR en apertura de socket");
+		exit( 1 );
+	}
 
+	memset( &serv_addr, 0, sizeof(serv_addr) );
+	serv_addr.sin_family = AF_INET;
+	serv_addr.sin_addr.s_addr = INADDR_ANY;
+	serv_addr.sin_port = htons( puertoUDP );
+	memset( &(serv_addr.sin_zero), '\0', 8 );
+	
+	if( bind( sockUDPfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr) ) < 0 ) {
+		perror( "ERROR en binding" );
+		exit( 1 );
+	}
+	
+	int tamano_direccion = sizeof( struct sockaddr );
+	//<\socket UDP>
 	while( 1 ) {
 		newsockfd = accept( sockfd, (struct sockaddr *) &cli_addr, &clilen );
 		if ( newsockfd < 0 ) {
@@ -58,7 +79,6 @@ int main( int argc, char *argv[] ) {
 			close( sockfd );
 
 			while ( 1 ) {
-				printf("\nBucle Principal\n");
 				memset( buffer, 0, TAM );
 				n = read( newsockfd, buffer, TAM-1 );
 				if ( n < 0 ) {
@@ -66,7 +86,7 @@ int main( int argc, char *argv[] ) {
 					exit(1);
 				}
 				printf( "PROCESO %d. ", getpid() );
-				printf( "Recibí: %s", buffer );
+				printf( "Recibí: %s\n", buffer );
 				if (!strcmp("updatetime",buffer)){
 					timestamp = time(&timestamp);
 					sprintf( stimestamp, "%d" , (int)timestamp);
@@ -75,18 +95,32 @@ int main( int argc, char *argv[] ) {
 						perror("escritura en socket");
 						exit(1);
 					}
-				}else{ 
-					//~ buffer[strlen(buffer)-1] = '\0';
+				}else if(!strcmp("settime",buffer)){
+						u = recvfrom( sockUDPfd, bufferUDP, TAM-1, 0, (struct sockaddr *)&serv_addr, &tamano_direccion );
+						if(u<0){
+							printf("Error recibiendo el archivo\n");
+							break;
+						}
+						//~ printf("string recibido por UDP %s\n",bufferUDP);
+						timestamp = atoi(bufferUDP);
+						printf("Nuevo timestamp asignado al servidor: %s",asctime(localtime(&timestamp)));
+						n = write( newsockfd, "Timestamp Actualizado en el Servidor", 37 );
+						if ( n < 0 ) {
+							perror( "escritura en socket" );
+							exit( 1 );
+						}
+				}else{
 					n = write( newsockfd, "Obtuve su mensaje", 18 );
 					if ( n < 0 ) {
 						perror( "escritura en socket" );
 						exit( 1 );
 					}
 					// Verificación de si hay que terminar
-					if( !strcmp( "fin", buffer ) ) {
+					if( !strcmp( "fin", buffer ) || !strcmp("exit",buffer) ) {
 						printf( "PROCESO %d. Como recibí 'fin', termino la ejecución.\n\n", getpid() );
 						exit(0);
 					}
+					
 				}
 			}
 		}
