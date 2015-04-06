@@ -1,3 +1,10 @@
+/**
+ * @mainpage Trabajo Práctico 1
+ * @version 1.0
+ * @author Ariel Iván Rabinovich
+ * @date Abril 2015
+ * @file cli_i.c
+*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -6,12 +13,14 @@
 #include <netinet/in.h>
 #include <netdb.h> 
 #include <time.h>
+#include "config_sockets.c"
 #define TAM 256
 #define puertoTCP 6020
 #define puertoUDP 6021
 
+///@brief Cliente NTC. Llamar con la ip del server NTC. Si no se especifica se utiliza localhost
 int main( int argc, char *argv[] ) {
-	int sockfd,n,sockUDPfd,u;
+	int sockTCPfd,n,sockUDPfd,u;
 	struct sockaddr_in serv_addr,dest_addr;
 	struct hostent *server;
 	int 	terminar = 0,
@@ -23,44 +32,30 @@ int main( int argc, char *argv[] ) {
 			srvaddr[TAM] = "localhost",
 			bufferUDP[TAM];
 	
-	if ( argc >= 2 ) {
-		strcpy(srvaddr,argv[1]);	//copio el address que me pasaron
+	if ( argc >= 2 ) {				//si me pasan un address
+		strcpy(srvaddr,argv[1]);	//lo copio, sino por defecto se usa localhost
 	}
-	//<socket tcp>
-	sockfd = socket( AF_INET, SOCK_STREAM, 0 );	//sockfd es un file descriptor
-	if ( sockfd < 0 ) {
-		perror( "ERROR apertura de socket" );
-		exit( 1 );
-	}
-
+	
 	server = gethostbyname(srvaddr);
 	if (server == NULL) {
-		fprintf( stderr,"Error, no existe el host\n" );
+		perror("Error, no existe el host" );
 		exit( 0 );
 	}
-	memset( (char *) &serv_addr, 0, sizeof(serv_addr) ); //cambie '0' por 0
-	serv_addr.sin_family = AF_INET;
-	bcopy( (char *)server->h_addr, (char *)&serv_addr.sin_addr.s_addr, server->h_length );
-	serv_addr.sin_port = htons( puertoTCP );
-	if ( connect( sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr ) ) < 0 ) {
-		perror( "conexion" );
-		exit( 1 );
+	
+	if((sockTCPfd = configTCPsocket(puertoTCP, &serv_addr, server)) < 0){
+		perror("Error en la conexión del socket TCP");
+		exit(1);
 	}
-	//<\socket tcp>
-	//<socket udp>
-	sockUDPfd = socket( AF_INET, SOCK_DGRAM, 0 );
-	if (sockfd < 0) {
-		perror( "apertura de socket" );
-		exit( 1 );
+	if (connect( sockTCPfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr ) ) < 0 ) {	//trata de conectar al servidor
+		perror("Error en la conexion");
+		exit (1);
 	}
 	
-	dest_addr.sin_family = AF_INET;
-	dest_addr.sin_port = htons(puertoUDP);
-	dest_addr.sin_addr = *((struct in_addr *)server->h_addr);
-	memset( &(dest_addr.sin_zero), '\0', 8 );
+	if((sockUDPfd = configUDPsocket(puertoUDP, &dest_addr, server)) < 0){
+		perror("Error en la conexión del socket UDP\n");
+		exit(1);
+	}
 	
-	
-	//<\socket udp>
 	while(1) {
 		printf( ">: " );
 		memset( buffer, '\0', TAM );
@@ -77,7 +72,7 @@ int main( int argc, char *argv[] ) {
 		if(!strcmp("timestamp",buffer)){
 			printf("%s",asctime(localtime(&timestamp)));
 		}else{
-			n = write( sockfd, buffer, strlen(buffer) );
+			n = write( sockTCPfd, buffer, strlen(buffer) );
 			if ( n < 0 ) {
 				perror( "escritura de socket" );
 				exit( 1 );
@@ -109,7 +104,7 @@ int main( int argc, char *argv[] ) {
 			}
 
 			memset( buffer, '\0', TAM );
-			n = read( sockfd, buffer, TAM );
+			n = read( sockTCPfd, buffer, TAM );
 			if ( n < 0 ) {
 				perror( "lectura de socket" );
 				exit( 1 );
@@ -129,5 +124,5 @@ int main( int argc, char *argv[] ) {
 	}
 	fclose(log);
 	fclose(reg);
-	return 0;
+	return EXIT_SUCCESS;
 } 

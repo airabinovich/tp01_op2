@@ -1,6 +1,9 @@
 /**
+ * @mainpage Trabajo Práctico 1
+ * @version 1.0
  * @author Ariel Iván Rabinovich
- * @date Mar 2015
+ * @date Abril 2015
+ * @file srv_i.c
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,6 +12,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <time.h>
+#include "config_sockets.c"
 #define TAM 256
 #define puertoTCP 6020
 #define puertoUDP 6021
@@ -21,16 +25,10 @@ int main( int argc, char *argv[] ) {
 	time_t timestamp = time(&timestamp);
 
 	//<socket TCP>
-	sockfd = socket( AF_INET, SOCK_STREAM, 0);
-	if ( sockfd < 0 ) { 
-		perror( " apertura de socket ");
-		exit( 1 );
+	if((sockfd = configTCPsocket(puertoTCP, &serv_addr, NULL)) < 0){
+		perror("Error en la creación del socket TCP");
+		exit(1);
 	}
-
-	memset( (char *) &serv_addr, 0, sizeof(serv_addr) );
-	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_addr.s_addr = INADDR_ANY;
-	serv_addr.sin_port = htons( puertoTCP );	//htons transforma little endian en big endian si es necesario
 
 	if ( bind(sockfd, ( struct sockaddr *) &serv_addr, sizeof( serv_addr ) ) < 0 ) {
 		perror( "ligadura" );
@@ -43,18 +41,10 @@ int main( int argc, char *argv[] ) {
 	clilen = sizeof( cli_addr );
 	//<\socket TCP>
 	//<socket UDP>
-	sockUDPfd = socket( AF_INET, SOCK_DGRAM, 0 );
-	if (sockfd < 0) { 
-		perror("ERROR en apertura de socket");
-		exit( 1 );
+	if((sockUDPfd = configUDPsocket(puertoUDP, &serv_addr , NULL)) < 0 ){
+		perror("Error en la creación del socket UDP");
+		exit(1);
 	}
-
-	memset( &serv_addr, 0, sizeof(serv_addr) );
-	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_addr.s_addr = INADDR_ANY;
-	serv_addr.sin_port = htons( puertoUDP );
-	memset( &(serv_addr.sin_zero), '\0', 8 );
-	
 	if( bind( sockUDPfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr) ) < 0 ) {
 		perror( "ERROR en binding" );
 		exit( 1 );

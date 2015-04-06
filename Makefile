@@ -1,4 +1,4 @@
-all: cli_i.o srv_i.o
+all: cli_i.o srv_i.o config_sockets.o
 	gcc -o cli_i cli_i.o
 	gcc -o srv_i srv_i.o
 clean:
@@ -6,3 +6,7 @@ clean:
 	rm *.log
 	rm *.o
 	rm *~
+cleandoxy:
+	rm -r html latex
+	rm Doxyfile
+	rm Doxyfile.bak
