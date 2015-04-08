@@ -23,6 +23,7 @@ int main( int argc, char *argv[] ) {
 	struct sockaddr_in serv_addr, cli_addr;
 	int n,u;
 	time_t timestamp = time(&timestamp);
+	FILE *recvd_tstmp = fopen("recvd_tstmp.txt","w");
 
 	//<socket TCP>
 	if((sockfd = configTCPsocket(puertoTCP, &serv_addr, NULL)) < 0){
@@ -45,7 +46,7 @@ int main( int argc, char *argv[] ) {
 		perror("Error en la creación del socket UDP");
 		exit(1);
 	}
-	if( bind( sockUDPfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr) ) < 0 ) {
+	if( bind( sockUDPfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr) ) < 0 ) { ///@brief bind asigna una durección a un socket. Se llama a la función bind con parámetros: sockUDPfd (file descriptor del socket UDP), &serv_addr (puntero a la estructura que describe la dirección), sizeof(serv_addr) (tamaño de la estructura)
 		perror( "ERROR en binding" );
 		exit( 1 );
 	}
@@ -53,7 +54,7 @@ int main( int argc, char *argv[] ) {
 	int tamano_direccion = sizeof( struct sockaddr );
 	//<\socket UDP>
 	while( 1 ) {
-		newsockfd = accept( sockfd, (struct sockaddr *) &cli_addr, &clilen );
+	newsockfd = accept( sockfd, (struct sockaddr *) &cli_addr, &clilen ); ///@brief Accept acepta la conexión de un socket. Se llama a la función accept con praámetros: suckUDPfd (file descriptor del socket UDP), &cli_addr (puntero a la estructura que describe la dirección del cliente), &clilen (puntero al tamaño de la estructura)
 		if ( newsockfd < 0 ) {
 			perror( "accept" );
 			exit( 1 );
@@ -86,31 +87,37 @@ int main( int argc, char *argv[] ) {
 						exit(1);
 					}
 				}else if(!strcmp("settime",buffer)){
-						u = recvfrom( sockUDPfd, bufferUDP, TAM-1, 0, (struct sockaddr *)&serv_addr, &tamano_direccion );
-						if(u<0){
-							printf("Error recibiendo el archivo\n");
-							break;
-						}
-						//~ printf("string recibido por UDP %s\n",bufferUDP);
-						timestamp = atoi(bufferUDP);
-						printf("Nuevo timestamp asignado al servidor: %s",asctime(localtime(&timestamp)));
-						n = write( newsockfd, "Timestamp Actualizado en el Servidor", 37 );
-						if ( n < 0 ) {
-							perror( "escritura en socket" );
-							exit( 1 );
-						}
-				}else{
-					n = write( newsockfd, "Obtuve su mensaje", 18 );
+					//~ fprintf(recvd_tstmp,"Timestamp recibido: ");
+					u = recvfrom( sockUDPfd, bufferUDP, TAM-1, 0, (struct sockaddr *)&serv_addr, &tamano_direccion ); ///@brief Se llama a la función recvfrom con parámetros sockUDPfd (file descriptor del socket UDP), bufferUDP (buffer a guardar la información), TAM-1 (tamaño del buffer), 0 (banderas, valor por defecto, bloqueante), &serv_addr (estructura que describe al servidor), tamaño dirección (tamaño de la estructura)
+					fprintf(recvd_tstmp,"%s\n",bufferUDP);
+					fflush(recvd_tstmp);
+					if(u<0){
+						printf("Error recibiendo el archivo\n");
+						break;
+					}
+					//~ printf("string recibido por UDP %s\n",bufferUDP);
+					timestamp = atoi(bufferUDP);
+					printf("Nuevo timestamp asignado al servidor: %s",asctime(localtime(&timestamp)));
+					n = write( newsockfd, "Timestamp Actualizado en el Servidor", 37 );
 					if ( n < 0 ) {
 						perror( "escritura en socket" );
 						exit( 1 );
 					}
-					// Verificación de si hay que terminar
-					if( !strcmp( "fin", buffer ) || !strcmp("exit",buffer) ) {
-						printf( "PROCESO %d. Como recibí 'fin', termino la ejecución.\n\n", getpid() );
-						exit(0);
+				}else if( !strcmp( "fin", buffer ) || !strcmp("exit",buffer) ) {
+					n = write( newsockfd, "Fin de la ejecución\n", 20 );
+					if ( n < 0 ) {
+						perror( "escritura en socket" );
+						exit( 1 );
 					}
-					
+					printf( "PROCESO %d termina su ejecución.\n\n", getpid() );
+					exit(0);
+				}else{
+					strcat(buffer," no es un código válido\n\0");
+					n = write( newsockfd, buffer, sizeof(buffer) );
+					if ( n < 0 ) {
+						perror( "escritura en socket" );
+						exit( 1 );
+					}					
 				}
 			}
 		}

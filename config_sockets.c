@@ -21,7 +21,7 @@
  * @return File descriptor id, -1 si hay error
  */
 int configTCPsocket(int port, struct sockaddr_in *serv_addr, struct hostent *server){
-	int sockfd = socket( AF_INET, SOCK_STREAM, 0 );	//sockfd es el file descriptor a retornar en caso de exito
+	int sockfd = socket( AF_INET, SOCK_STREAM, 0 );	///@brief Se llama a la función socket con parámetros AF_INET (pido un socket de internet), SOCK_STREAM (para utilizar protocolo TCP) y 0 (banderas, valor por defecto)
 	if ( sockfd < 0 ) {
 		perror("Error en la apertura de socket");
 		return (-1);
@@ -44,7 +44,7 @@ int configTCPsocket(int port, struct sockaddr_in *serv_addr, struct hostent *ser
  * @return File descriptor id, -1 si hay error
  */
 int configUDPsocket(int port, struct sockaddr_in *dest_addr, struct hostent *server){
-	int sockfd = socket( AF_INET, SOCK_DGRAM, 0 );
+	int sockfd = socket( AF_INET, SOCK_DGRAM, 0 ); ///@brief Se llama a socket con parámetros AF_INET (pido un socket de internet), SOCK_STREAM (para utilizar protocolo TCP) y 0 (banderas, valor por defecto)
 	if (sockfd < 0) {
 		perror( "Error en la apertura de socket" );
 		return (-1);

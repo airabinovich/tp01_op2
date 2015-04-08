@@ -27,7 +27,7 @@ int main( int argc, char *argv[] ) {
 			actualizar = 0;
 	time_t 	timestamp = 0;
 	FILE 	*log = fopen("cliente.log","w"),
-			*reg = fopen("registro.txt","r");
+			*reg = fopen("reg_tstmp.txt","r");
 	char 	buffer[TAM],
 			srvaddr[TAM] = "localhost",
 			bufferUDP[TAM];
@@ -67,8 +67,8 @@ int main( int argc, char *argv[] ) {
 		char *stiempolocal = asctime(localtime(&tiempolocal));
 		stiempolocal[strlen(stiempolocal)-1]='\0';
 		fprintf(log,"%s: %s\n",stiempolocal,buffer);
+		fflush(log);
 		//<\log>
-		
 		if(!strcmp("timestamp",buffer)){
 			printf("%s",asctime(localtime(&timestamp)));
 		}else{
@@ -91,7 +91,7 @@ int main( int argc, char *argv[] ) {
 						printf("Error leyendo el archivo solicitado\n");
 						break;
 					}
-					u = sendto( sockUDPfd, (void *)bufferUDP, TAM, 0, (struct sockaddr *)&dest_addr, sizeof(dest_addr) );	
+					u = sendto( sockUDPfd, (void *)bufferUDP, TAM, 0, (struct sockaddr *)&dest_addr, sizeof(dest_addr) );	///@brief Se llama a sendto con parámetros (sockUDPfd, el file descriptor del socket),bufferUDP (buffer donde se encuentra la información a enviar), TAM (tamaño del buffer), 0 (banderas, valor por defecto, bloqueante), &dest_addr (dirección de la estructura del destinatario), sizeof(dest_addr) (tamaño de la estructura)
 					if(u<0){
 						printf("Error enviando el archivo solicitado\n");
 						break;
